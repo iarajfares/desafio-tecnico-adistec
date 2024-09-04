@@ -84,5 +84,5 @@ app.delete("/libros/:id", (req, res) => {
 });
 
 app.listen(3300, () => {
-    console.log('Hola')
+    console.log('Iniciado en el puerto: 3300')
 });
