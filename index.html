@@ -90,6 +90,14 @@
         
         document.addEventListener('DOMContentLoaded', fetchLibros);
 
+        class Libro {
+            constructor(id, nombre, autor, lanzamiento) {
+                this.id = id;
+                this.nombre = nombre;
+                this.autor = autor;
+                this.lanzamiento = lanzamiento;
+            }
+        }
         function fetchLibros() {
             fetch('http://localhost:3300/libros')
                 .then(response => response.json())
@@ -97,16 +105,17 @@
                     const tbody = document.getElementById('librosTabla');
                     tbody.innerHTML = '';
 
-                    libros.forEach((libro, index) => {
+                    libros.forEach((libroData, index) => {
+                        const objetoLibro = new Libro(libroData.id, libroData.nombre, libroData.autor, libroData.lanzamiento)
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td>${libro.id}</td>
-                            <td>${libro.nombre}</td>
-                            <td>${libro.autor}</td>
-                            <td>${libro.lanzamiento}</td>
+                            <td>${objetoLibro.id}</td>
+                            <td>${objetoLibro.nombre}</td>
+                            <td>${objetoLibro.autor}</td>
+                            <td>${objetoLibro.lanzamiento}</td>
                             <td>
-                                <button class="btn btn-warning btn-sm" onclick="editarLibro(${libro.id})">Editar</button>
-                                <button class="btn btn-danger btn-sm" onclick="eliminarLibro(${libro.id})">Borrar</button>
+                                <button class="btn btn-warning btn-sm" onclick="editarLibro(${objetoLibro.id})">Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarLibro(${objetoLibro.id})">Borrar</button>
                             </td>`;
                             tbody.appendChild(tr);
                     });
@@ -121,18 +130,18 @@
             const autor = document.getElementById('agregar-autor').value;
             const lanzamiento = document.getElementById('agregar-lanzamiento').value;
 
-            const nuevoLibro = {
-                nombre: titulo,
-                autor: autor,
-                lanzamiento: lanzamiento
-            };
+            const nuevoLibro = new Libro(null, titulo, autor, lanzamiento);
 
             fetch(`http://localhost:3300/libros`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(nuevoLibro)
+                body: JSON.stringify({
+                    nombre: nuevoLibro.nombre,
+                    autor: nuevoLibro.autor,
+                    lanzamiento: nuevoLibro.lanzamiento
+                })
             })
             .then(response => response.json())
             .then(data => {
@@ -144,9 +153,7 @@
             })
             .catch(error => console.error('Error al crear el libro:', error));
         });
-
         
-
         function editarLibro(id) {
             fetch(`http://localhost:3300/libros/${id}`)
             .then(response => response.json())
@@ -168,18 +175,18 @@
             const autor = document.getElementById('editar-autor').value;
             const lanzamiento = document.getElementById('editar-lanzamiento').value;
             
-            const libroActualizado = {
-                nombre,
-                autor,
-                lanzamiento
-            };
+            const libroActualizado = new Libro(id, nombre, autor, lanzamiento);
 
             fetch(`http://localhost:3300/libros/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(libroActualizado)
+                body: JSON.stringify({
+                    nombre: libroActualizado.nombre,
+                    autor: libroActualizado.autor,
+                    lanzamiento: libroActualizado.lanzamiento,
+                })
             })
             .then(response => response.json())
             .then(data => {
