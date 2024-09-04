@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Biblioteca Virtuak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1>Lista de Libros</h1>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Titulo</th>
+                    <th scope="col">Autor</th>
+                    <th scope="col">Lanzamiento</th>
+                    <th scope="col">Opciones</th>
+                </tr>
+            </thead>
+            <tbody id="librosTabla">
+                <!-- datos dinamicos -->
+            </tbody>
+        </table>
+        <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#agregarLibro">Agregar nuevo libro</button>
+    </div>
+    <!-- modal editar -->
+    <div class="modal fade" id="editarModal" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-titulo" id="editarModalLabel">Editar Libro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editar-form">
+                        <input type="hidden" id="editar-id">
+                        <div class="mb-3">
+                            <label for="editar-titulo" class="form-label">Titulo</label>
+                            <input type="text" class="form-control" id="editar-titulo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editar-autor" class="form-label">Autor</label>
+                            <input type="text" class="form-control" id="editar-autor">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editar-lanzamiento" class="form-label">Lanzamiento</label>
+                            <input type="number" class="form-control" id="editar-lanzamiento">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal Agregar -->
+    <div class="modal fade" id="agregarLibro" tabindex="-1" aria-labelledby="agregarLibroLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-titulo" id="agregarLibroLabel">Editar Libro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="agregar-form">
+                        <input type="hidden" id="agregar-id">
+                        <div class="mb-3">
+                            <label for="agregar-titulo" class="form-label">Titulo</label>
+                            <input type="text" class="form-control" id="agregar-titulo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="agregar-autor" class="form-label">Autor</label>
+                            <input type="text" class="form-control" id="agregar-autor">
+                        </div>
+                        <div class="mb-3">
+                            <label for="agregar-lanzamiento" class="form-label">Lanzamiento</label>
+                            <input type="number" class="form-control" id="agregar-lanzamiento">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', fetchLibros);
+
+        function fetchLibros() {
+            fetch('http://localhost:3300/libros')
+                .then(response => response.json())
+                .then(libros => {
+                    const tbody = document.getElementById('librosTabla');
+                    tbody.innerHTML = '';
+
+                    libros.forEach((libro, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${libro.id}</td>
+                            <td>${libro.nombre}</td>
+                            <td>${libro.autor}</td>
+                            <td>${libro.lanzamiento}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="editarLibro(${libro.id})">Editar</button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarLibro(${libro.id})">Borrar</button>
+                            </td>`;
+                            tbody.appendChild(tr);
+                    });
+                })
+                .catch(error => console.error('Error al obtener los libros:', error));
+        }
+
+        document.getElementById('agregar-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            
+            const titulo = document.getElementById('agregar-titulo').value;
+            const autor = document.getElementById('agregar-autor').value;
+            const lanzamiento = document.getElementById('agregar-lanzamiento').value;
+
+            const nuevoLibro = {
+                nombre: titulo,
+                autor: autor,
+                lanzamiento: lanzamiento
+            };
+
+            fetch(`http://localhost:3300/libros`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(nuevoLibro)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Libro creado:', data);
+                fetchLibros();
+
+                const agregarModal = bootstrap.Modal.getInstance(document.getElementById('agregarLibro'));
+                agregarModal.hide();
+            })
+            .catch(error => console.error('Error al crear el libro:', error));
+        });
+
+        
+
+        function editarLibro(id) {
+            fetch(`http://localhost:3300/libros/${id}`)
+            .then(response => response.json())
+            .then(libro => {
+                document.getElementById('editar-id').value = libro.id;
+                document.getElementById('editar-titulo').value = libro.nombre;
+                document.getElementById('editar-autor').value = libro.autor;
+                document.getElementById('editar-lanzamiento').value = libro.lanzamiento;
+
+                const editarModal = new bootstrap.Modal(document.getElementById('editarModal'), {});
+                editarModal.show();
+            })
+            .catch(error => console.error('Error al obtener el libro:', error));
+        }
+        document.getElementById('editar-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id = document.getElementById('editar-id').value;
+            const nombre = document.getElementById('editar-titulo').value;
+            const autor = document.getElementById('editar-autor').value;
+            const lanzamiento = document.getElementById('editar-lanzamiento').value;
+            
+            const libroActualizado = {
+                nombre,
+                autor,
+                lanzamiento
+            };
+
+            fetch(`http://localhost:3300/libros/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(libroActualizado)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Libro actualizado:', data);
+                fetchLibros();
+
+                const editarModal = bootstrap.Modal.getInstance(document.getElementById('editarModal'));
+                editarModal.hide();
+            })
+            .catch(error => console.error('Error al actualizar el libro:', error));
+        });
+
+            function eliminarLibro(id){
+                if (confirm('¿Estás seguro de que quieres eliminar este libro?')) {
+                    fetch(`http://localhost:3300/libros/${id}`, {
+                        method:'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Libro eliminado:', data);
+                        fetchLibros();
+                    })
+                    .catch(error => console.error('Error al eliminar el libro:', error));
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
